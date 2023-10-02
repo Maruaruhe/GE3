@@ -8,7 +8,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	input = new Input();
 
 	//
-	input->Initialize();
+	//input->Initialize();
 
 	//
 	delete input;
