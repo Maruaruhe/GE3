@@ -2,6 +2,7 @@
 
 #include "Input.h"
 #include "WindowsAPI.h"
+#include "DirectXCommon.h"
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//
@@ -11,9 +12,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	WindowsAPI* winAPI = nullptr;
 	winAPI = new WindowsAPI();
 
+	DirectXCommon* dxCommon = nullptr;
+	dxCommon = new DirectXCommon;
+
 	//
 	winAPI->Initialize();
 	input->Initialize(winAPI);
+	dxCommon->Initialize();
 	//
 	while (1) {
 		if (winAPI->ProcessMessage()) {
@@ -22,6 +27,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	}
 	//
 	delete input;
+	delete dxCommon;
 
 	winAPI->Finalize();
 	delete winAPI;
