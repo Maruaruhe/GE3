@@ -29,9 +29,9 @@ private:
 private:
 	WindowsAPI* winAPI_ = nullptr;
 	//DirectX12デバイス
-	Microsoft::WRL::ComPtr<ID3D12Device> device;
+	Microsoft::WRL::ComPtr<ID3D12Device> device_;
 	//DXGIファクトリ
-	Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory;
+	Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory_;
 	//バックバッファ
 	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> backBuffers;
 };
