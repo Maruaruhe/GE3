@@ -16,6 +16,8 @@ public:
 	HWND GetHwnd()const { return hwnd; }
 	HINSTANCE GetHInstance()const { return wc.hInstance; }
 
+	bool ProcessMessage();
+
 public:
 	//ウインドウクラスの設定
 	WNDCLASSEX wc{};

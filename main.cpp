@@ -14,7 +14,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//
 	winAPI->Initialize();
 	input->Initialize(winAPI);
-
+	//
+	while (1) {
+		if (winAPI->ProcessMessage()) {
+			break;
+		}
+	}
 	//
 	delete input;
 
