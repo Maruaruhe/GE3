@@ -2,7 +2,7 @@
 #include <cassert>
 
 #pragma comment(lib,"dinput8.lib")
-#pragma comment(lib,"dxgiod.lib")
+#pragma comment(lib,"dxguid.lib")
 
 void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
 	HRESULT result;
