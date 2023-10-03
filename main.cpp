@@ -12,8 +12,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	winAPI = new WindowsAPI();
 
 	//
-	//input->Initialize();
 	winAPI->Initialize();
+	input->Initialize(winAPI->GetHInstance(), winAPI->GetHwnd());
 
 	//
 	delete input;

@@ -12,12 +12,6 @@ LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 }
 
 void WindowsAPI::Initialize() {
-	//ウィンドウサイズ
-	const int kCliantWidth = 1280;
-	const int kCliantHeight = 720;
-
-	//ウインドウクラスの設定
-	WNDCLASSEX wc{};
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.lpfnWndProc = WindowProc;	//ウインドウプロシージャ	
 	wc.lpszClassName = L"DirectX";	//ウインドウクラス名（なんでもいい）
@@ -31,7 +25,7 @@ void WindowsAPI::Initialize() {
 	//自動でサイズを補正する
 	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
 
-	HWND hwnd = CreateWindow(
+	hwnd = CreateWindow(
 		wc.lpszClassName,		//利用するクラス名
 		L"DirectX",			//タイトルバーの文字
 		WS_OVERLAPPEDWINDOW,	//よく見るウインドウスタイル
