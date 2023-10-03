@@ -4,11 +4,13 @@
 #pragma comment(lib,"dinput8.lib")
 #pragma comment(lib,"dxguid.lib")
 
-void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
+void Input::Initialize(WindowsAPI* winAPI) {
+	this->winAPI_ = winAPI;
+
 	HRESULT result;
 	//DiretxInputのインスタンス生成
 	//ComPtr<IDirectInput8> directInput = nullptr;
-	result = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
+	result = DirectInput8Create(winAPI_->GetHInstance(), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
 	assert(SUCCEEDED(result));
 	//キーボードデバイス作成
 	//ComPtr<IDirectInputDevice8> keyboard;
@@ -18,7 +20,7 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
 	result = keyboard->SetDataFormat(&c_dfDIKeyboard);
 	assert(SUCCEEDED(result));
 	//排他制御レベルのリセット
-	result = keyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
+	result = keyboard->SetCooperativeLevel(winAPI_->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
 	assert(SUCCEEDED(result));
 }
 

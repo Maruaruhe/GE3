@@ -13,10 +13,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	//
 	winAPI->Initialize();
-	input->Initialize(winAPI->GetHInstance(), winAPI->GetHwnd());
+	input->Initialize(winAPI);
 
 	//
 	delete input;
+
+	winAPI->Finalize();
 	delete winAPI;
 
 	return 0;

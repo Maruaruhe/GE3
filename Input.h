@@ -6,13 +6,15 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 
+#include "WindowsAPI.h"
+
 class Input
 {
 public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(HINSTANCE hInstance, HWND hwnd);
+	void Initialize(WindowsAPI* winAPI);
 	/// <summary>
 	/// 更新
 	/// </summary>
@@ -27,6 +29,8 @@ public:
 	bool TriggerKey(BYTE keyNumber);
 
 private:
+	WindowsAPI* winAPI_ = nullptr;
+
 	template <class Type> using ComPtr = Microsoft::WRL::ComPtr<Type>;
 
 	ComPtr<IDirectInput8> directInput = nullptr;

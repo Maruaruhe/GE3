@@ -45,3 +45,7 @@ void WindowsAPI::Initialize() {
 void WindowsAPI::Update() {
 
 }
+
+void WindowsAPI::Finalize() {
+	UnregisterClass(wc.lpszClassName, wc.hInstance);
+}

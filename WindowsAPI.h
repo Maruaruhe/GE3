@@ -11,6 +11,8 @@ public:
 
 	void Update();
 
+	void Finalize();
+
 	HWND GetHwnd()const { return hwnd; }
 	HINSTANCE GetHInstance()const { return wc.hInstance; }
 
