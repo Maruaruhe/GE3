@@ -23,12 +23,11 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
 }
 
 void Input::Update() {
-	HRESULT result;
+	//HRESULT result;
 	//前回のキー入力を保存
 	memcpy(preKey, key, sizeof(key));
 	//キーボード情報の取得開始
 	keyboard->Acquire();
-	BYTE key[256] = {};
 	//全キーの入力情報を取得する
 	keyboard->GetDeviceState(sizeof(key), key);
 }
