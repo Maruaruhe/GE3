@@ -87,22 +87,80 @@ void DirectXCommon::InitializeDevice() {
 void DirectXCommon::InitializeCommand() {
 	HRESULT result;
 	//コマンドアロケータ生成
-	result = device_->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator));
+	result = device_->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator_));
 	assert(SUCCEEDED(result));
 	//コマンドリスト生成
-
+	result = device_->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator_.Get(), nullptr, IID_PPV_ARGS(&commandList_));
+	assert(SUCCEEDED(result));
 	//コマンドキュー生成
+	D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
+	result = device_->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&commandQueue_));
+	assert(SUCCEEDED(result));
 }
 
 void DirectXCommon::InitializeSwapChain() {
+	HRESULT result;
+	//スワップチェーン生成の設定
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
+
+	swapChainDesc.Width = 1280;
+	swapChainDesc.Height = 720;
+	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapChainDesc.SampleDesc.Count = 1;
+	//swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
+	swapChainDesc.BufferCount = 2;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	//スワップチェーン生成
+	ComPtr<IDXGISwapChain1> swapChain1;
+
+	result = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), winAPI_->GetHwnd(), &swapChainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapChain1);
+	assert(SUCCEEDED(result));
+	//IDXGISwapCahin1のオブジェクトをIDXGISwapChain4に変換
 
 }
 
 void DirectXCommon::InitializeRenderTargetView() {
+	HRESULT result;
 
+	DXGI_SWAP_CHAIN_DESC swcDesc = {};
+	result = swapChain_->GetDesc(&swcDesc);
+	assert(SUCCEEDED(result));
+	//RTV用デスクリプターヒープ生成
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
+
+	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	heapDesc.NumDescriptors = swcDesc.BufferCount;
+
+    result = device_->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeap_));
+	assert(SUCCEEDED(result));
+	//裏表の2つ分
+	backBuffers_.resize(swcDesc.BufferCount);
+	for (int i = 0; i < backBuffers_.size(); i++) {
+		//スワップチェーンからバッファを取得
+		
+		// デスクリプターヒープのバンドルを取得
+		
+		// 裏か表でアドレスがずれる
+
+		//レンダーターゲットビューの設定
+
+		//シェーダーの計算結果をSRGBに変換して書き込む
+		
+		//レンダーターゲットビューの生成
+
+	}
 }
 
 void DirectXCommon::InitializeDepthBuffer() {
+	//深度バッファリソース生成
+	
+	// 深度バッファ生成
+	
+	// DSV用デスクリプターヒープ生成
+	
+	//深度バッファビュー（DSV）生成
 
 }
 
