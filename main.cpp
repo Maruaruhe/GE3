@@ -18,7 +18,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//
 	winAPI->Initialize();
 	input->Initialize(winAPI);
-	dxCommon->Initialize();
+	dxCommon->Initialize(winAPI);
 	//
 	while (1) {
 		if (winAPI->ProcessMessage()) {

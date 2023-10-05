@@ -11,18 +11,56 @@ using namespace Microsoft::WRL;
 void DirectXCommon::Initialize(WindowsAPI* winAPI) {
 	assert(winAPI);
 	this->winAPI_ = winAPI;
+
+	InitializeDXGIFactory();
+
+	InitializeAdapter();
+
+	InitializeDebugLayer();
+
+	InitializeDevice();
+
+	InitializeCommand();
+
+	InitializeSwapChain();
+
+	InitializeRenderTargetView();
+
+	InitializeDepthBuffer();
+
+	InitializeFence();
 }
 
 void DirectXCommon::Update() {
 
 }
 
-void DirectXCommon::InitializeAdapter() {
-
+void DirectXCommon::InitializeDXGIFactory() {
+	HRESULT result;
+	//DXGIファクトリーの生成
+	result = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory_));
+	assert(SUCCEEDED(result));
 }
 
-void DirectXCommon::InitializeDevice() {
-	HRESULT result;
+void DirectXCommon::InitializeAdapter() {
+	//アダプターの列挙
+	useAdapter_ = nullptr;
+
+	for (UINT i = 0; dxgiFactory_->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&useAdapter_)) != DXGI_ERROR_NOT_FOUND; ++i) {
+		//GetAdapterInfo
+		DXGI_ADAPTER_DESC3 adapterDesc = {};
+		HRESULT hr = useAdapter_->GetDesc3(&adapterDesc);
+		assert(SUCCEEDED(hr));
+		//ソフトウェアでなければok
+		if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)) {
+			break;
+		}
+		useAdapter_ = nullptr;
+	}
+	assert(useAdapter_ != nullptr);
+}
+
+void DirectXCommon::InitializeDebugLayer() {
 #ifdef _DEBUG
 	ComPtr<ID3D12Debug> debugController;
 	//デバッグレイヤーを有効化する
@@ -32,53 +70,20 @@ void DirectXCommon::InitializeDevice() {
 		//debugController->SetEnableGPUBasedValidation(TRUE);
 	}
 #endif
+}
 
+void DirectXCommon::InitializeDevice() {
+	HRESULT result;
 	device_ = nullptr;
-
-	//DXGIファクトリーの生成
-	result = CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory_));
-	assert(SUCCEEDED(result));
-
-	//アダプターの列挙
-	std::vector<IDXGIAdapter4*> adapters;
-	//ここに特定の名前を持つアダプターオブジェクトが入る
-	IDXGIAdapter4* tmpAdapter = nullptr;
-	//パフォーマンスが高いものから順に、全てのアダプターを列挙する
-	for (UINT i = 0; dxgiFactory_->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&tmpAdapter)) != DXGI_ERROR_NOT_FOUND; i++) {
-		//動的配列に追加する
-		adapters.push_back(tmpAdapter);
-	}
-	//妥当なアダプタを選別する
-	for (size_t i = 0; i < adapters.size(); i++) {
-		DXGI_ADAPTER_DESC3 adapterDesc;
-		//アダプタの情報をを取得する
-		adapters[i]->GetDesc3(&adapterDesc);
-		//ソフトウェアデバイスを回避
-		if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)) {
-			//デバイスを採用してループを抜ける
-			tmpAdapter = adapters[i];
-			break;
-		}
-	}
 	
 	//デバイスの生成
 
 	//対応レベルの配列
-	D3D_FEATURE_LEVEL levels[] = {
-		D3D_FEATURE_LEVEL_12_1,
-		D3D_FEATURE_LEVEL_12_0,
-		D3D_FEATURE_LEVEL_11_1,
-		D3D_FEATURE_LEVEL_11_0,
-	};
-
-	D3D_FEATURE_LEVEL featureLevel;
-
-	for (size_t i = 0; i < _countof(levels); i++) {
-		//採用したアダプタでデバイスを生成
-		result = D3D12CreateDevice(tmpAdapter, levels[i], IID_PPV_ARGS(&device_));
-		if (result == S_OK) {
-			//デバイス生成できた時点でループを抜ける
-			featureLevel = levels[i];
+	D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0 };
+	const char* featureLevelStrings[] = { "12.2","12.1","12.0" };
+	for (size_t i = 0; i < _countof(featureLevels); ++i) {
+		result = D3D12CreateDevice(useAdapter_, featureLevels[i], IID_PPV_ARGS(&device_));
+		if (SUCCEEDED(result)) {
 			break;
 		}
 	}
@@ -107,50 +112,46 @@ void DirectXCommon::InitializeSwapChain() {
 	swapChainDesc.Height = 720;
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.SampleDesc.Count = 1;
-	//swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.BufferCount = 2;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-	//スワップチェーン生成
-	ComPtr<IDXGISwapChain1> swapChain1;
 
-	result = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), winAPI_->GetHwnd(), &swapChainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapChain1);
+	result = dxgiFactory_->CreateSwapChainForHwnd(commandQueue_.Get(), winAPI_->GetHwnd(), &swapChainDesc, nullptr, nullptr, swapChain.GetAddressOf());
 	assert(SUCCEEDED(result));
-	//IDXGISwapCahin1のオブジェクトをIDXGISwapChain4に変換
-
 }
 
 void DirectXCommon::InitializeRenderTargetView() {
 	HRESULT result;
 
-	DXGI_SWAP_CHAIN_DESC swcDesc = {};
-	result = swapChain_->GetDesc(&swcDesc);
+	rtvDescriptorHeap = CreateDescriptorHeap(device_.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
+	rtvDescriptorHeapDesc = {};
+
+	srvDescriptorHeap = CreateDescriptorHeap(device_.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
+
+	rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvDescriptorHeapDesc.NumDescriptors = 2;
+
+	result = device_->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(&rtvDescriptorHeap));
 	assert(SUCCEEDED(result));
-	//RTV用デスクリプターヒープ生成
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
 
-	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	heapDesc.NumDescriptors = swcDesc.BufferCount;
-
-    result = device_->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeap_));
+	swapChainResource[0] = { nullptr };
+	swapChainResource[1] = { nullptr };
+	result = swapChain->GetBuffer(0, IID_PPV_ARGS(&swapChainResource[0]));
 	assert(SUCCEEDED(result));
-	//裏表の2つ分
-	backBuffers_.resize(swcDesc.BufferCount);
-	for (int i = 0; i < backBuffers_.size(); i++) {
-		//スワップチェーンからバッファを取得
-		
-		// デスクリプターヒープのバンドルを取得
-		
-		// 裏か表でアドレスがずれる
+	result = swapChain->GetBuffer(1, IID_PPV_ARGS(&swapChainResource[1]));
+	assert(SUCCEEDED(result));
 
-		//レンダーターゲットビューの設定
+	rtvDesc = {};
+	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-		//シェーダーの計算結果をSRGBに変換して書き込む
-		
-		//レンダーターゲットビューの生成
+	rtvStartHandle = rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
-	}
+	rtvHandle[0] = rtvStartHandle;
+	device_->CreateRenderTargetView(swapChainResource[0], &rtvDesc, rtvHandle[0]);
+	rtvHandle[1].ptr = rtvHandle[0].ptr + device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	device_->CreateRenderTargetView(swapChainResource[1], &rtvDesc, rtvHandle[1]);
 }
 
 void DirectXCommon::InitializeDepthBuffer() {
@@ -165,5 +166,64 @@ void DirectXCommon::InitializeDepthBuffer() {
 }
 
 void DirectXCommon::InitializeFence() {
+	HRESULT result;
+	//初期値0でFenceを作る
+	Microsoft::WRL::ComPtr <ID3D12Fence> fence = nullptr;
+	uint64_t fenceValue = 0;
+	result=device_->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+	assert(SUCCEEDED(result));
 
+	//FenceのSignalを待つためのイベントを作成する
+	HANDLE fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	assert(fenceEvent != nullptr);
+
+	//Fenceの値を更新
+	fenceValue++;
+	//GPUが着いたときに、Fenceの値を指定した値に代入するようSignalを送る
+	commandQueue_->Signal(fence.Get(), fenceValue);
+
+	if (fence->GetCompletedValue() < fenceValue) {
+		fence->SetEventOnCompletion(fenceValue, fenceEvent);
+		WaitForSingleObject(fenceEvent, INFINITE);
+	}
+}
+
+
+
+ID3D12Resource* DirectXCommon::CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
+
+	HRESULT hr;
+	//VertexResourceを生成する--------------------------------------------------------------------------------
+	//頂点リソース用のヒープの作成の設定
+	D3D12_HEAP_PROPERTIES uploadHeapProperties = {};
+	uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+	//頂点リソースの設定
+	D3D12_RESOURCE_DESC ResourceDesc = {};
+	//バッファリソース。テクスチャの場合はまた別の設定をする
+	ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	ResourceDesc.Width = sizeInBytes;
+	//バッファの場合はこれらは１にする決まり
+	ResourceDesc.Height = 1;
+	ResourceDesc.DepthOrArraySize = 1;
+	ResourceDesc.MipLevels = 1;
+	ResourceDesc.SampleDesc.Count = 1;
+	//バッファの場合はこれにする決まり
+	ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	//実際に頂点リソースを作る
+	ID3D12Resource* Resource = nullptr;
+	hr = device->CreateCommittedResource(&uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&Resource));
+	assert(SUCCEEDED(hr));
+
+	return Resource;
+}
+
+ID3D12DescriptorHeap* DirectXCommon::CreateDescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible) {
+	ID3D12DescriptorHeap* descriptorHeap = nullptr;
+	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
+	descriptorHeapDesc.Type = heapType;
+	descriptorHeapDesc.NumDescriptors = numDescriptors;
+	descriptorHeapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap));
+	assert(SUCCEEDED(hr));
+	return descriptorHeap;
 }
