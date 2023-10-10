@@ -11,7 +11,14 @@ public:
 	void Initialize(WindowsAPI* winAPI);
 
 	void Update();
+
+	void PreDraw();
+
+	void PostDraw();
 private:
+	/// <summary>
+	/// Initialize
+	/// </summary>
 	void InitializeDXGIFactory();
 
 	void InitializeAdapter();
@@ -30,6 +37,21 @@ private:
 
 	void InitializeFence();
 
+	/// <summary>
+	/// PreDraw
+	/// </summary>
+
+	void Barrier();
+
+	void RenderTargetView();
+
+	/// <summary>
+	/// PostDraw
+	/// </summary>
+	
+	void ScreenDisplay();
+
+	//
 	ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes);
 
 	ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDescriptors, bool shaderVisible);
@@ -71,5 +93,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap_;
 	//バックバッファ
 	//std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> backBuffers_;
+	UINT backBufferIndex;
+
+	D3D12_RESOURCE_BARRIER barrier;
 };
 

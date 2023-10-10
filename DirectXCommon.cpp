@@ -35,6 +35,51 @@ void DirectXCommon::Update() {
 
 }
 
+void DirectXCommon::PreDraw() {
+	//バックバッファの番号取得
+	backBufferIndex = swapChain_->GetCurrentBackBufferIndex();
+	// リソースバリアで書き込み可能に変更
+	Barrier();
+	// 描画先指定
+	RenderTargetView();
+	// レンダーターゲットクリア
+	
+	// 深度バッファクリア
+	
+	//ビューポート領域の指定
+	
+	//シザー矩形の設定
+
+}
+
+void DirectXCommon::PostDraw() {
+	//バックバッファの番号取得
+	
+	//リソースバリアで表示状態に変更
+	ScreenDisplay();
+	// グラフィックスコマンドをクローズ
+	HRESULT result = commandList_->Close();
+	assert(SUCCEEDED(result));
+	// GPUコマンドの実行
+	//Microsoft::WRL::ComPtr<ID3D12CommandList> commandLists[] = { commandList_ };
+	ID3D12CommandList* commandLists[] = { commandList_.Get()};
+	commandQueue_->ExecuteCommandLists(1,commandLists);
+
+	swapChain_->Present(1, 0);
+	// コマンド完了待ち
+	
+	// コマンドアロケータのリセット
+	
+	// コマンドリストのリセット
+	result = commandAllocator_->Reset();
+	assert(SUCCEEDED(result));
+
+	result = commandList_->Reset(commandAllocator_.Get(), nullptr);
+	assert(SUCCEEDED(result));
+	//画面フリップ
+
+}
+
 void DirectXCommon::InitializeDXGIFactory() {
 	HRESULT result;
 	//DXGIファクトリーの生成
@@ -188,7 +233,37 @@ void DirectXCommon::InitializeFence() {
 	}
 }
 
+void DirectXCommon::Barrier() {
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = swapChainResource[backBufferIndex];
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
+	commandList_->ResourceBarrier(1, &barrier);
+}
+
+void DirectXCommon::RenderTargetView() {
+	commandList_->OMSetRenderTargets(1, &rtvHandle[backBufferIndex], false, nullptr);
+
+	float clearColor[] = { 0.1f,0.25f,0.5f,1.0f };
+	commandList_->ClearRenderTargetView(rtvHandle[backBufferIndex], clearColor, 0, nullptr);
+}
+
+//postDraw
+
+void DirectXCommon::ScreenDisplay() {
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+	commandList_->ResourceBarrier(1, &barrier);
+}
+
+/// <summary>
+/// 
+/// </summary>
+/// <param name="device"></param>
+/// <param name="sizeInBytes"></param>
+/// <returns></returns>
 
 ID3D12Resource* DirectXCommon::CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
 

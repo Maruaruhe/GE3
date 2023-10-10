@@ -20,8 +20,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	input->Initialize(winAPI);
 	dxCommon->Initialize(winAPI);
 	//
+
 	while (1) {
 		if (winAPI->ProcessMessage()) {
+
+			dxCommon->PreDraw();
+
+			dxCommon->PostDraw();
+
 			break;
 		}
 	}
